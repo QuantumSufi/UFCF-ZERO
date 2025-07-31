@@ -72,7 +72,7 @@ model = norm * ell_cut ** (-alpha)
 # ---------- 5) Grafik ----------
 plt.figure()
 plt.loglog(ell_cut, cl_cut, 'o', label='Planck (PR3)')
-plt.loglog(ell_cut, model, '-', label=rf'$\ell^{-{alpha:.1f}}$')
+plt.loglog(ell_cut, model, '-', label=rf'$\ell^{{-{alpha:.1f}}}$')
 plt.xlabel(r'Multipole $\ell$')
 plt.ylabel(r'$C_\ell\;[\mu\mathrm{K}^2]$')
 plt.title('Low‑ℓ Power Spectrum (2–20)')
