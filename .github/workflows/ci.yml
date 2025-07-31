@@ -25,7 +25,10 @@ jobs:
      
       - name: Install project (editable)
         run: python -m pip install -e .
-
+      
+      - name: Run Planck low‑ℓ script
+        run: python scripts/planck_low_l.py
+ 
       
       - name: Run tests
         run: python -m pytest -q
