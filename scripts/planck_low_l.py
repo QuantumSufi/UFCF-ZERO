@@ -1,58 +1,78 @@
 """
-planck_low_l.py
-ℓ = 2–20 güç tayfı + fraktal model grafiği üretir.
+planck_low_l.py   –   ℓ = 2‑20 güç tayfı + fraktal model grafiği
+  1) Haritayı (≈50 MB) indirmeye çalışır  ➜ healpy anafast
+  2) Harita download  ×  ise: Planck TT power‑spectrum metnini kullanır
 """
 
-import os, urllib.request, healpy as hp, numpy as np, matplotlib.pyplot as plt
+import os, urllib.request, numpy as np, matplotlib.pyplot as plt
+import warnings
 
-# --- 0. Ayarlar ---
-URLS = [
-    "https://pla.esac.esa.int/pla-sl/data-action?MAP.MAP_ID=COM_CMB_IQU-commander_2048_R3.00_full&DOWNLOAD",
-    "https://lambda.gsfc.nasa.gov/data/planck/pla/2020/component_maps/cmb/COM_CMB_IQU-commander_2048_R3.00_full.fits"
+MAP_URLS = [
+    # ESA preview mirror (works via HTTP 302)
+    "https://irsa.ipac.caltech.edu/data/Planck/release_3/all-sky-maps/previews/"
+    "COM_CMB_IQU-commander_2048_R3.00_full/COM_CMB_IQU-commander_2048_R3.00_full_I_STOKES.fits"
 ]
-FITS_PATH = "data/planck_commander_2048.fits"
+PS_URL   = ("https://irsa.ipac.caltech.edu/data/Planck/release_3/ancillary-data/"
+            "cosmoparams/COM_PowerSpect_CMB-TT-full_R3.01.txt")
 
-# --- 1. İndir (fallback'li) ---
-def download_if_needed():
+FITS_PATH = "data/planck_I_stokes.fits"
+PS_PATH   = "data/planck_TT.txt"
+
+os.makedirs("data", exist_ok=True)
+os.makedirs("fig",  exist_ok=True)
+
+# ------------------------------------------------------------
+def try_download(url, dest):
+    try:
+        urllib.request.urlretrieve(url, dest)
+        return True
+    except Exception as e:
+        print(f"  failed: {e}")
+        return False
+
+# ---------- 1) Harita indirme denemesi ----------
+map_ok = False
+for link in MAP_URLS:
     if os.path.exists(FITS_PATH):
-        return
-    os.makedirs("data", exist_ok=True)
-    for link in URLS:
-        try:
-            print(f"Downloading Planck map from:\n  {link}")
-            urllib.request.urlretrieve(link, FITS_PATH)
-            print("Download successful.")
-            return
-        except Exception as e:
-            print(f"Failed ({e}). Trying next mirror...")
-    raise RuntimeError("All download mirrors failed.")
+        map_ok = True
+        break
+    print(f"Downloading Planck map:\n  {link}")
+    if try_download(link, FITS_PATH):
+        map_ok = True
+        break
 
-download_if_needed()
+if map_ok:
+    # healpy yalnız harita yolunu görünce memory‑map okur – düşük RAM
+    import healpy as hp
+    print("Reading FITS & computing Cl...")
+    m = hp.read_map(FITS_PATH, verbose=False)
+    cl = hp.anafast(m, lmax=20)
+    ell = np.arange(len(cl))
+else:
+    # ---------- 2) Yedek güç tayfı metni ----------
+    if not os.path.exists(PS_PATH):
+        print("Map download başarısız ➜ güç tayfı metni indiriliyor …")
+        if not try_download(PS_URL, PS_PATH):
+            raise RuntimeError("Planck verisi indirilemedi – CI durdu.")
+    # Metin dosyasında: ℓ  D_ℓ  σ …
+    data = np.loadtxt(PS_PATH)
+    ell = data[:, 0].astype(int)
+    Dl  = data[:, 1]           # μK²
+    cl  = Dl * 2*np.pi / (ell*(ell+1))  # Cl = Dℓ * 2π / ℓ(ℓ+1)
 
-# --- 2. Haritayı oku (I kanalı) ---
-print("Reading FITS...")
-cmb_map = hp.read_map(FITS_PATH, field=0, verbose=False)
-
-# --- 3. C_ell hesapla ---
-print("Computing Cl...")
-cl = hp.anafast(cmb_map, lmax=20)
-ell = np.arange(len(cl))
-
-# --- 4. ℓ=2–20 seç ---
+# ---------- 3) ℓ = 2–20 seç ----------
 mask = (ell >= 2) & (ell <= 20)
-ell_cut = ell[mask]
-cl_cut = cl[mask]
+ell_cut, cl_cut = ell[mask], cl[mask]
 
-# --- 5. Fraktal model (α=2.3) ---
+# ---------- 4) Fraktal model ----------
 alpha = 2.3
-norm = cl_cut[0] * (ell_cut[0] ** alpha)
+norm  = cl_cut[0] * (ell_cut[0] ** alpha)
 model = norm * ell_cut ** (-alpha)
 
-# --- 6. Grafik ---
-os.makedirs("fig", exist_ok=True)
+# ---------- 5) Grafik ----------
 plt.figure()
-plt.loglog(ell_cut, cl_cut, 'o', label='Planck 2018')
-plt.loglog(ell_cut, model, '-', label=rf'$\ell^{{-{alpha:.1f}}}$')
+plt.loglog(ell_cut, cl_cut, 'o', label='Planck (PR3)')
+plt.loglog(ell_cut, model, '-', label=rf'$\ell^{-{alpha:.1f}}$')
 plt.xlabel(r'Multipole $\ell$')
 plt.ylabel(r'$C_\ell\;[\mu\mathrm{K}^2]$')
 plt.title('Low‑ℓ Power Spectrum (2–20)')

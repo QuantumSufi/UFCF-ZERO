@@ -2,6 +2,8 @@
 out/
 data/*.fits       # Planck haritası
 *.npz             # lattice sonuç dosyaları
+data/*.fits
+data/*.txt
 
 # Colab / pycache
 notebooks/__pycache__/
