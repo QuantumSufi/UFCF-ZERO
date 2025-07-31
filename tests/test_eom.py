@@ -1,8 +1,10 @@
+from sympy import simplify
 from ufcf_zero.lagrangian import eom, A
 
 def test_euler_lagrange_flat6d():
     """
-    Basit doğrulama: A -> 0 ikamesi sonrası EOM ifadesi sıfır olmalı.
+    EOM ifadesi A -> 0 ikamesi sonrası tam 0'a sadeleşmeli.
     """
     expr = eom()
-    assert expr.subs({A: 0}) == 0
+    zero_expr = simplify(expr.subs({A: 0}).doit())
+    assert zero_expr == 0
