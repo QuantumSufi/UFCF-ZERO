@@ -5,8 +5,10 @@ planck_low_l.py
 
 import os, urllib.request, healpy as hp, numpy as np, matplotlib.pyplot as plt
 
-URL = ("https://irsa.ipac.caltech.edu/data/Planck/release_3/all-sky-maps/"
-       "maps/component-separated/COM_CMB_IQU-commander_2048_R3.00_full.fits")
+URLS = [
+    "https://pla.esac.esa.int/pla-sl/data-action?MAP.MAP_ID=COM_CMB_IQU-commander_2048_R3.00_full&DOWNLOAD",
+    "https://lambda.gsfc.nasa.gov/data/planck/pla/2020/component_maps/cmb/COM_CMB_IQU-commander_2048_R3.00_full.fits"
+]
 FITS_PATH = "data/planck_commander_2048.fits"
 
 os.makedirs("data", exist_ok=True)
