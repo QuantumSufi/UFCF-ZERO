@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ufcf-zero"
+version = "0.0.1"
+description = "UFCF Zero budget prototype"
+authors = [{ name = "Quantum Sufi" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
