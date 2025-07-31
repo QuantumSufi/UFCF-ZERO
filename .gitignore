@@ -1,5 +1,7 @@
-# Sprint‑2 / ‑3
+# çıktı klasörleri
 out/
-data/*.fits
-*.npz
+data/*.fits       # Planck haritası
+*.npz             # lattice sonuç dosyaları
+
+# Colab / pycache
 notebooks/__pycache__/
